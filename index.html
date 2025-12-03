@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCM Discovery Guide V3 | CipherHealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Urbanist', sans-serif; background-color: #F8FAFC; -webkit-font-smoothing: antialiased; }
+        
+        /* Custom Checkbox/Button Logic */
+        .signal-btn {
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .signal-btn.active-green {
+            background-color: #DCFCE7; /* Green 100 */
+            border-color: #22C55E; /* Green 500 */
+            color: #14532D; /* Green 900 */
+        }
+        .signal-btn.active-red {
+            background-color: #FEE2E2; /* Red 100 */
+            border-color: #EF4444; /* Red 500 */
+            color: #7F1D1D; /* Red 900 */
+        }
+
+        /* Animation for Recommendation Updates */
+        .pulse-update {
+            animation: pulse-blue 0.5s ease-in-out;
+        }
+        @keyframes pulse-blue {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Print Styles for PDF Generation */
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .print-break { page-break-inside: avoid; }
+            textarea { 
+                border: none; 
+                resize: none; 
+                padding: 0;
+                height: auto;
+                min-height: 50px;
+                overflow: hidden; 
+            }
+            .card {
+                border: 1px solid #E2E8F0;
+                box-shadow: none;
+                margin-bottom: 20px;
+            }
+            .header-bg { background-color: #1C2930 !important; -webkit-print-color-adjust: exact; }
+            .text-white-print { color: white !important; -webkit-print-color-adjust: exact; }
+            /* Hide the live guidance in print, show summary instead */
+            #live-guidance { display: none !important; }
+            /* Remove sticky behavior for print */
+            .sticky-wrapper { position: static !important; }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cipher: { blue: '#1D70B8', green: '#68BC59', navy: '#1C2930' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-slate-800 pb-20">
+
+    <!-- STICKY WRAPPER: Keeps Header and Coach visible -->
+    <div class="sticky top-0 z-50 sticky-wrapper shadow-lg">
+        
+        <!-- HEADER -->
+        <header class="bg-cipher-navy header-bg text-white py-5 relative z-20">
+            <div class="max-w-5xl mx-auto px-6 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-cipher-blue rounded flex items-center justify-center font-bold text-xl">CH</div>
+                    <div>
+                        <h1 class="font-bold text-2xl text-white-print">TCM Discovery Guide</h1>
+                        <p class="text-xs text-slate-400">Transitional Care Management Qualification</p>
+                    </div>
+                </div>
+                <div class="flex gap-3 no-print">
+                    <button onclick="resetForm()" class="text-slate-400 hover:text-white text-sm font-semibold px-3 py-2">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Reset
+                    </button>
+                    <button onclick="window.print()" class="bg-cipher-green hover:bg-emerald-600 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-md transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-file-pdf"></i> Save to PDF
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- LIVE GUIDANCE DASHBOARD (V3 Update) -->
+        <div id="live-guidance" class="bg-blue-50 border-b border-blue-100 shadow-inner no-print relative z-10">
+            <div class="max-w-5xl mx-auto px-6 py-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center text-xl shadow-sm flex-shrink-0" id="coach-icon">
+                        <i class="fa-solid fa-robot text-cipher-blue"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wide">Live Sales Coach</h3>
+                                <h2 class="text-lg font-bold text-cipher-navy mt-1 transition-all" id="coach-title">Listening for signals...</h2>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold text-slate-400 uppercase block">Deal Health</span>
+                                <div class="flex items-center gap-1 mt-1" id="health-meter">
+                                    <div class="w-3 h-3 rounded-full bg-slate-300"></div>
+                                    <div class="w-3 h-3 rounded-full bg-slate-300"></div>
+                                    <div class="w-3 h-3 rounded-full bg-slate-300"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-600 mt-1 transition-all" id="coach-desc">
+                            Select Green or Red flags below to get real-time positioning advice.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-5xl mx-auto px-6 py-8 space-y-8">
+
+        <!-- PROSPECT INFO -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 print-break">
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Prospect Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Health System / Hospital Name</label>
+                    <input type="text" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 focus:outline-none focus:border-cipher-blue transition-colors" placeholder="e.g. Memorial Health">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Stakeholders Present</label>
+                    <input type="text" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 focus:outline-none focus:border-cipher-blue transition-colors" placeholder="e.g. Jane Doe (CFO), Dr. Smith (CMO)">
+                </div>
+            </div>
+        </section>
+
+        <!-- QUESTION 1: CAPTURE RATE -->
+        <section class="card bg-white rounded-xl shadow-md overflow-hidden print-break">
+            <div class="bg-slate-50 border-b border-slate-200 p-6 flex justify-between items-start">
+                <div>
+                    <span class="bg-blue-100 text-cipher-blue px-2 py-1 rounded text-xs font-bold uppercase">Q1: Performance</span>
+                    <h2 class="text-2xl font-bold text-cipher-navy mt-2">"How are you currently tracking your TCM capture rate?"</h2>
+                    <p class="text-sm text-slate-500 mt-1 italic">Goal: Identify if they know they are losing money.</p>
+                </div>
+            </div>
+            
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-slate-100">
+                <!-- LISTEN FOR -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4 text-emerald-700 font-bold">
+                        <i class="fa-solid fa-ear-listen"></i> Listen For (Green Flags)
+                    </div>
+                    <div class="space-y-3">
+                        <!-- New V3 Button: Care Without Walls -->
+                        <button onclick="toggleBtn(this, 'green')" data-tag="walls" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"Concerned about readmissions / patients 'falling off the cliff'."</span>
+                        </button>
+
+                        <button onclick="toggleBtn(this, 'green')" data-tag="manual" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"We track it manually on spreadsheets."</span>
+                        </button>
+                        <button onclick="toggleBtn(this, 'green')" data-tag="pain" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"We know our rate is low (under 40%)."</span>
+                        </button>
+                        <button onclick="toggleBtn(this, 'green')" data-tag="pressure" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"CFO is pushing for new revenue streams."</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- RED FLAGS -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4 text-red-700 font-bold">
+                        <i class="fa-solid fa-flag"></i> Red Flags (Risks)
+                    </div>
+                    <div class="space-y-3">
+                        <button onclick="toggleBtn(this, 'red')" data-tag="priority" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"We don't bill for TCM / Not a priority."</span>
+                        </button>
+                        <button onclick="toggleBtn(this, 'red')" data-tag="ehr" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"Our EHR already does this perfectly."</span>
+                        </button>
+                        <button onclick="toggleBtn(this, 'red')" data-tag="budget" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"We have no budget for new tools."</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50/50">
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Rep Notes</label>
+                <textarea class="w-full bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 focus:outline-none focus:border-cipher-blue transition-colors resize-y" rows="3" placeholder="Type specific metrics mentioned (e.g. 300 discharges/mo)..." oninput="autoExpand(this)"></textarea>
+            </div>
+        </section>
+
+        <!-- QUESTION 2: WORKFLOW -->
+        <section class="card bg-white rounded-xl shadow-md overflow-hidden print-break">
+            <div class="bg-slate-50 border-b border-slate-200 p-6 flex justify-between items-start">
+                <div>
+                    <span class="bg-blue-100 text-cipher-blue px-2 py-1 rounded text-xs font-bold uppercase">Q2: Workflow</span>
+                    <h2 class="text-2xl font-bold text-cipher-navy mt-2">"Walk me through the process. Who makes the calls?"</h2>
+                    <p class="text-sm text-slate-500 mt-1 italic">Goal: Identify staff burnout and inefficiency.</p>
+                </div>
+            </div>
+            
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-slate-100">
+                <!-- LISTEN FOR -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4 text-emerald-700 font-bold">
+                        <i class="fa-solid fa-ear-listen"></i> Listen For (Green Flags)
+                    </div>
+                    <div class="space-y-3">
+                        <button onclick="toggleBtn(this, 'green')" data-tag="burnout" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"Nurses are doing it on top of clinical work."</span>
+                        </button>
+                        <button onclick="toggleBtn(this, 'green')" data-tag="weekend" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"We miss weekend discharges (2-day window)."</span>
+                        </button>
+                        <button onclick="toggleBtn(this, 'green')" data-tag="efficiency" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"We leave a lot of voicemails."</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- RED FLAGS -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4 text-red-700 font-bold">
+                        <i class="fa-solid fa-flag"></i> Red Flags (Risks)
+                    </div>
+                    <div class="space-y-3">
+                        <button onclick="toggleBtn(this, 'red')" data-tag="outsourced" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"We outsource this to a call center firm."</span>
+                        </button>
+                        <button onclick="toggleBtn(this, 'red')" data-tag="intentional" class="signal-btn w-full text-left p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm text-slate-600 flex items-start gap-3">
+                            <div class="mt-0.5 w-4 h-4 border-2 border-slate-300 rounded flex-shrink-0 check-box"></div>
+                            <span>"We only call high-risk patients (intentional)."</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50/50">
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Rep Notes</label>
+                <textarea class="w-full bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 focus:outline-none focus:border-cipher-blue transition-colors resize-y" rows="3" placeholder="Describe their current manual process..." oninput="autoExpand(this)"></textarea>
+            </div>
+        </section>
+
+        <!-- NEXT STEPS -->
+        <section class="bg-cipher-navy rounded-xl p-8 text-white print-break">
+            <h2 class="text-xl font-bold mb-4">Discovery Summary & Next Steps</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Estimated Opportunity (Mental Math)</label>
+                    <textarea class="w-full bg-slate-800 border border-slate-700 rounded-lg p-4 text-sm text-white focus:outline-none focus:border-cipher-green transition-colors resize-y" rows="3" placeholder="e.g. 300 discharges * 25% lift = $300k/yr opportunity..." oninput="autoExpand(this)"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Agreed Next Step</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 p-3 bg-slate-800 rounded-lg cursor-pointer hover:bg-slate-700 transition">
+                            <input type="radio" name="next_step" class="text-cipher-green focus:ring-0">
+                            <span class="text-sm">Run ROI Calculator (Scheduled Mtg)</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 bg-slate-800 rounded-lg cursor-pointer hover:bg-slate-700 transition">
+                            <input type="radio" name="next_step" class="text-cipher-green focus:ring-0">
+                            <span class="text-sm">Send Case Study (Follow-up Email)</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 bg-slate-800 rounded-lg cursor-pointer hover:bg-slate-700 transition">
+                            <input type="radio" name="next_step" class="text-cipher-green focus:ring-0">
+                            <span class="text-sm">Disqualified (No Fit)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Store current state
+        let activeGreen = new Set();
+        let activeRed = new Set();
+        let activeTags = new Set();
+
+        function toggleBtn(btn, type) {
+            const checkBox = btn.querySelector('.check-box');
+            const tag = btn.getAttribute('data-tag');
+            
+            if (type === 'green') {
+                btn.classList.toggle('active-green');
+                btn.classList.toggle('font-bold');
+                
+                if (btn.classList.contains('active-green')) {
+                    // Turn ON
+                    checkBox.innerHTML = '<i class="fa-solid fa-check text-xs"></i>';
+                    checkBox.classList.add('bg-emerald-200', 'border-emerald-500', 'flex', 'items-center', 'justify-center');
+                    activeGreen.add(tag);
+                    activeTags.add(tag);
+                } else {
+                    // Turn OFF
+                    checkBox.innerHTML = '';
+                    checkBox.classList.remove('bg-emerald-200', 'border-emerald-500', 'flex', 'items-center', 'justify-center');
+                    activeGreen.delete(tag);
+                    activeTags.delete(tag);
+                }
+            } else {
+                btn.classList.toggle('active-red');
+                btn.classList.toggle('font-bold');
+                
+                if (btn.classList.contains('active-red')) {
+                    // Turn ON
+                    checkBox.innerHTML = '<i class="fa-solid fa-xmark text-xs"></i>';
+                    checkBox.classList.add('bg-red-200', 'border-red-500', 'flex', 'items-center', 'justify-center');
+                    activeRed.add(tag);
+                    activeTags.add(tag);
+                } else {
+                    // Turn OFF
+                    checkBox.innerHTML = '';
+                    checkBox.classList.remove('bg-red-200', 'border-red-500', 'flex', 'items-center', 'justify-center');
+                    activeRed.delete(tag);
+                    activeTags.delete(tag);
+                }
+            }
+
+            updateLiveCoach();
+        }
+
+        function updateLiveCoach() {
+            const title = document.getElementById('coach-title');
+            const desc = document.getElementById('coach-desc');
+            const icon = document.getElementById('coach-icon');
+            const meters = document.getElementById('health-meter').children;
+
+            // Reset Animation
+            title.classList.remove('pulse-update');
+            void title.offsetWidth; // Trigger reflow
+            title.classList.add('pulse-update');
+
+            // --- V3 LOGIC: Care Without Walls (High Priority) ---
+            if (activeTags.has('walls')) {
+                title.innerText = "🏥 Narrative: Care Without Walls";
+                title.className = "text-lg font-bold text-cipher-blue mt-1 transition-all pulse-update";
+                desc.innerText = "Pivot: 'Discharge is a handoff, not a sign-off.' Manual calls can't cover the 'Cliff' between discharge and home. Cipher acts as the digital bridge to extend your care 24/7.";
+                icon.innerHTML = '<i class="fa-solid fa-hospital-user text-cipher-blue"></i>';
+                setHealth(3);
+                return;
+            }
+
+            // 1. SPECIFIC OBJECTION HANDLING (Red Flags take priority for specific advice)
+            if (activeTags.has('budget')) {
+                // Budget Blocker
+                title.innerText = "🛑 Objection Alert: Budget";
+                title.className = "text-lg font-bold text-red-600 mt-1 transition-all pulse-update";
+                desc.innerText = "Pivot Strategy: 'I understand. Many clients use our Pharma-Funded Vaccine Outreach program to create budget neutral value first.' (Don't lower price yet).";
+                icon.innerHTML = '<i class="fa-solid fa-shield-halved text-red-500"></i>';
+                setHealth(1);
+                return;
+            }
+
+            if (activeTags.has('ehr')) {
+                // EHR Competitor
+                title.innerText = "⚠️ Objection Alert: EHR Capabilities";
+                title.className = "text-lg font-bold text-orange-600 mt-1 transition-all pulse-update";
+                desc.innerText = "Trap Question: 'Your EHR can send texts, but does it automatically triage patient responses and alert nurses only when needed? Or do they still have to check a list?'";
+                icon.innerHTML = '<i class="fa-solid fa-server text-orange-500"></i>';
+                setHealth(2);
+                return;
+            }
+            
+            if (activeTags.has('outsourced')) {
+                // Outsourced
+                title.innerText = "⚠️ Objection Alert: Call Center";
+                title.className = "text-lg font-bold text-orange-600 mt-1 transition-all pulse-update";
+                desc.innerText = "Trap Question: 'How long is the lag time between the call center finding an issue and your clinical team knowing about it? We do it instantly.'";
+                icon.innerHTML = '<i class="fa-solid fa-headset text-orange-500"></i>';
+                setHealth(2);
+                return;
+            }
+
+            // 2. GENERAL HEALTH LOGIC
+            const gCount = activeGreen.size;
+            const rCount = activeRed.size;
+
+            if (gCount === 0 && rCount === 0) {
+                // Default
+                title.innerText = "Listening for signals...";
+                title.className = "text-lg font-bold text-cipher-navy mt-1 transition-all pulse-update";
+                desc.innerText = "Select Green or Red flags below to get real-time positioning advice.";
+                icon.innerHTML = '<i class="fa-solid fa-robot text-cipher-blue"></i>';
+                setHealth(0);
+            } 
+            else if (rCount >= 2 && gCount === 0) {
+                // Disqualify
+                title.innerText = "🚫 Low Fit: Disqualify";
+                title.className = "text-lg font-bold text-red-600 mt-1 transition-all pulse-update";
+                desc.innerText = "Too many structural barriers. Pivot to 'Keep in Touch' unless you can find a Champion.";
+                icon.innerHTML = '<i class="fa-solid fa-ban text-red-500"></i>';
+                setHealth(1);
+            }
+            else if (gCount > 0 && rCount === 0) {
+                // Strong Green Light
+                title.innerText = "✅ Green Light: ROI Calculator";
+                title.className = "text-lg font-bold text-emerald-600 mt-1 transition-all pulse-update";
+                desc.innerText = "Great fit. They have pain (manual/low rate) and motivation. Close for the ROI Calculator meeting.";
+                icon.innerHTML = '<i class="fa-solid fa-thumbs-up text-emerald-500"></i>';
+                setHealth(3);
+            }
+            else if (gCount >= rCount) {
+                // Mixed but good
+                title.innerText = "⚖️ Mixed Signals: Clarify";
+                title.className = "text-lg font-bold text-blue-600 mt-1 transition-all pulse-update";
+                desc.innerText = "Good potential, but address the Red Flags before discussing price. Focus on 'Staff Efficiency' to win them over.";
+                icon.innerHTML = '<i class="fa-solid fa-scale-balanced text-blue-500"></i>';
+                setHealth(2);
+            } else {
+                 // Mixed but bad
+                 title.innerText = "⚠️ High Risk: Proceed with Caution";
+                 title.className = "text-lg font-bold text-orange-600 mt-1 transition-all pulse-update";
+                 desc.innerText = "Red flags outweigh the fit. You need to find a 'Personal Win' for the stakeholder to save this.";
+                 icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-orange-500"></i>';
+                 setHealth(1);
+            }
+        }
+
+        function setHealth(level) {
+            const meters = document.getElementById('health-meter').children;
+            // Reset
+            meters[0].className = "w-3 h-3 rounded-full bg-slate-300";
+            meters[1].className = "w-3 h-3 rounded-full bg-slate-300";
+            meters[2].className = "w-3 h-3 rounded-full bg-slate-300";
+
+            if (level >= 1) meters[0].className = "w-3 h-3 rounded-full bg-red-500";
+            if (level >= 2) {
+                meters[0].className = "w-3 h-3 rounded-full bg-yellow-500";
+                meters[1].className = "w-3 h-3 rounded-full bg-yellow-500";
+            }
+            if (level >= 3) {
+                meters[0].className = "w-3 h-3 rounded-full bg-emerald-500";
+                meters[1].className = "w-3 h-3 rounded-full bg-emerald-500";
+                meters[2].className = "w-3 h-3 rounded-full bg-emerald-500";
+            }
+        }
+
+        function autoExpand(field) {
+            field.style.height = 'inherit';
+            const computed = window.getComputedStyle(field);
+            const height = parseInt(computed.getPropertyValue('border-top-width'), 10)
+                         + parseInt(computed.getPropertyValue('padding-top'), 10)
+                         + field.scrollHeight
+                         + parseInt(computed.getPropertyValue('padding-bottom'), 10)
+                         + parseInt(computed.getPropertyValue('border-bottom-width'), 10);
+            field.style.height = height + 'px';
+        }
+
+        function resetForm() {
+            if(confirm("Clear all notes and selections?")) {
+                activeGreen.clear();
+                activeRed.clear();
+                activeTags.clear();
+                
+                const buttons = document.querySelectorAll('.signal-btn');
+                buttons.forEach(btn => {
+                    btn.classList.remove('active-green', 'active-red', 'font-bold');
+                    const checkBox = btn.querySelector('.check-box');
+                    checkBox.innerHTML = '';
+                    checkBox.classList.remove('bg-emerald-200', 'border-emerald-500', 'bg-red-200', 'border-red-500', 'flex', 'items-center', 'justify-center');
+                });
+                const inputs = document.querySelectorAll('input[type="text"], textarea');
+                inputs.forEach(input => input.value = '');
+                const radios = document.querySelectorAll('input[type="radio"]');
+                radios.forEach(r => r.checked = false);
+                
+                updateLiveCoach();
+            }
+        }
+    </script>
+</body>
+</html>
