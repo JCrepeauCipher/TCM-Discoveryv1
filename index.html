@@ -27,6 +27,38 @@
             visibility: visible;
             opacity: 1;
         }
+
+        /* Print Styles */
+        @media print {
+            @page {
+                margin: 0.5cm;
+            }
+            body { 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+                padding-bottom: 0;
+                background-color: white; 
+            }
+            /* Hide all buttons during print (Reset, Save PDF, Copy CRM) */
+            button { 
+                display: none !important; 
+            }
+            /* Unstick headers so they don't float over content */
+            header, .sticky { 
+                position: static !important; 
+            }
+            /* Remove shadows for cleaner print */
+            .shadow-md, .shadow-sm, .shadow-lg {
+                box-shadow: none !important;
+            }
+            /* Ensure textareas print their content clearly */
+            textarea {
+                border: 1px solid #e2e8f0;
+                resize: none;
+                overflow: visible;
+                display: block;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 pb-20">
@@ -46,7 +78,7 @@
             <button onclick="resetForm()" class="flex items-center gap-2 text-slate-400 hover:text-white text-sm font-medium transition-colors">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i> Reset
             </button>
-            <button class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded font-bold text-sm flex items-center gap-2 shadow-sm transition-colors">
+            <button onclick="window.print()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded font-bold text-sm flex items-center gap-2 shadow-sm transition-colors">
                 <i data-lucide="file-text" class="w-4 h-4"></i> Save to PDF
             </button>
         </div>
@@ -122,8 +154,8 @@
 
         <!-- Footer -->
         <div class="flex justify-center pt-8">
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg flex items-center gap-2">
-                <i data-lucide="save" class="w-5 h-5"></i> Complete Discovery
+            <button id="btn-copy-crm" onclick="copyForCRM()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg flex items-center gap-2 transition-all">
+                <i data-lucide="clipboard-copy" class="w-5 h-5"></i> Copy for CRM
             </button>
         </div>
 
@@ -235,7 +267,7 @@
                     <!-- Notes -->
                     <div class="px-6 pb-6 pt-2">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Rep Notes</h4>
-                        <textarea class="w-full min-h-[80px] p-3 rounded border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-blue-400 text-sm resize-y" placeholder="Type specific metrics mentioned (e.g. 300 discharges/mo)..."></textarea>
+                        <textarea id="note-q${q.id}" class="w-full min-h-[80px] p-3 rounded border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-blue-400 text-sm resize-y" placeholder="Type specific metrics mentioned (e.g. 300 discharges/mo)..."></textarea>
                     </div>
                 </div>
                 `;
@@ -263,6 +295,7 @@
             if (negCount > posCount + 1) health = 'bad';
 
             updateUI(health, posCount, negCount);
+            return health;
         }
 
         // Update UI based on Health
@@ -304,6 +337,77 @@
             }
         }
 
+        // CRM Copy Function
+        function copyForCRM() {
+            const hospital = document.getElementById('hospital-name').value || "N/A";
+            const stakeholders = document.getElementById('stakeholders').value || "N/A";
+            const currentHealth = calculateHealth().toUpperCase();
+
+            // Build the text note
+            let text = `TCM DISCOVERY SUMMARY\n`;
+            text += `==================================\n`;
+            text += `PROSPECT: ${hospital}\n`;
+            text += `STAKEHOLDERS: ${stakeholders}\n`;
+            text += `DEAL HEALTH: ${currentHealth}\n`;
+            text += `==================================\n\n`;
+
+            questionsData.forEach(q => {
+                const qId = q.id;
+                const checkedSignals = Array.from(document.querySelectorAll(`.signal-checkbox[data-qid="${qId}"]:checked`));
+                const note = document.getElementById(`note-q${qId}`).value.trim();
+
+                // Only add sections that have data
+                if (checkedSignals.length > 0 || note) {
+                    text += `[Q${qId}: ${q.category}] ${q.text}\n`;
+                    
+                    if (checkedSignals.length > 0) {
+                        checkedSignals.forEach(cb => {
+                            const type = cb.dataset.type === 'positive' ? '(+)' : '(-)';
+                            const labelText = cb.nextElementSibling.innerText;
+                            text += `  • ${type} ${labelText}\n`;
+                        });
+                    }
+                    
+                    if (note) {
+                        text += `  > NOTE: ${note}\n`;
+                    }
+                    text += `\n`;
+                }
+            });
+
+            // Use legacy execCommand for maximum iframe compatibility
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                
+                // Visual Feedback
+                const btn = document.getElementById('btn-copy-crm');
+                const originalContent = btn.innerHTML;
+                
+                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                btn.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i> Copied!`;
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                    btn.innerHTML = originalContent;
+                    lucide.createIcons();
+                }, 2000);
+
+            } catch (err) {
+                console.error('Copy failed', err);
+                alert("Failed to copy notes. Please manually copy the content.");
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
         function resetForm() {
             if (confirm("Clear all selections and notes?")) {
                 document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
@@ -312,6 +416,14 @@
                 calculateHealth(); // Reset UI
             }
         }
+        
+        // Auto-expand textareas before printing to prevent cut-off text
+        window.addEventListener('beforeprint', () => {
+            document.querySelectorAll('textarea').forEach(tx => {
+                tx.style.height = 'auto';
+                tx.style.height = tx.scrollHeight + 'px';
+            });
+        });
 
         // Run on start
         renderApp();
