@@ -134,17 +134,40 @@
 
     <main class="max-w-5xl mx-auto p-6 space-y-6">
         
-        <!-- 3. Prospect Details -->
-        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Prospect Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Hospital Name</label>
-                    <input type="text" id="hospital-name" class="w-full bg-slate-50 border border-slate-200 rounded p-3 text-slate-700 focus:outline-none focus:border-blue-400 transition-colors" placeholder="e.g. Memorial Health">
+        <!-- 3. Prospect Details & Calculator -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Details -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Prospect Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Hospital Name</label>
+                        <input type="text" id="hospital-name" class="w-full bg-slate-50 border border-slate-200 rounded p-3 text-slate-700 focus:outline-none focus:border-blue-400 transition-colors" placeholder="e.g. Memorial Health">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Stakeholders</label>
+                        <input type="text" id="stakeholders" class="w-full bg-slate-50 border border-slate-200 rounded p-3 text-slate-700 focus:outline-none focus:border-blue-400 transition-colors" placeholder="e.g. Jane Doe (CFO)">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Stakeholders</label>
-                    <input type="text" id="stakeholders" class="w-full bg-slate-50 border border-slate-200 rounded p-3 text-slate-700 focus:outline-none focus:border-blue-400 transition-colors" placeholder="e.g. Jane Doe (CFO)">
+            </div>
+
+            <!-- ROI Calculator -->
+            <div class="bg-slate-800 rounded-lg shadow-sm border border-slate-700 p-6 text-white">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Opportunity Calculator</h3>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1">Mo. Discharges</label>
+                        <input type="number" id="calc-volume" oninput="calculateRevenue()" class="w-full bg-slate-700 border border-slate-600 rounded p-2 text-white focus:outline-none focus:border-blue-400" value="50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1">Current Capture %</label>
+                        <input type="number" id="calc-capture" oninput="calculateRevenue()" class="w-full bg-slate-700 border border-slate-600 rounded p-2 text-white focus:outline-none focus:border-blue-400" value="20">
+                    </div>
+                </div>
+                <div class="pt-4 border-t border-slate-700">
+                    <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Annual Lost Revenue</p>
+                    <h2 id="calc-lost" class="text-3xl font-bold text-rose-400">$96,000</h2>
+                    <p class="text-xs text-slate-500 mt-1 italic">Based on $200 avg. reimbursement</p>
                 </div>
             </div>
         </div>
@@ -153,7 +176,10 @@
         <div id="questions-container" class="space-y-6"></div>
 
         <!-- Footer -->
-        <div class="flex justify-center pt-8">
+        <div class="flex justify-center gap-4 pt-8">
+            <button onclick="exportToEmail()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-8 py-3 rounded-lg font-bold shadow-lg flex items-center gap-2 transition-all border border-slate-300">
+                <i data-lucide="mail" class="w-5 h-5"></i> Email Team
+            </button>
             <button id="btn-copy-crm" onclick="copyForCRM()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg flex items-center gap-2 transition-all">
                 <i data-lucide="clipboard-copy" class="w-5 h-5"></i> Copy for CRM
             </button>
@@ -179,7 +205,7 @@
     </div>
 
     <script>
-        // Data Structure
+        // Data Structure - SWAPPED LOGIC: Old Negatives are now Positives (Opportunities), Old Positives are now Negatives (Risks/Competitors)
         const questionsData = [
             {
                 id: 1,
@@ -187,12 +213,12 @@
                 text: "Who on your team is physically making the outreach calls?",
                 subtext: "Uncover staff burnout and high labor costs.",
                 positiveSignals: [
-                    { id: 'q1_p1', label: "\"Centralized call center team.\"" },
-                    { id: 'q1_p2', label: "\"Medical Assistants or Admin staff.\"" },
+                    { id: 'q1_p1', label: "\"Our RNs / Nurse Manager does it.\"", tip: "Opportunity: RNs are expensive. We can offload this." },
+                    { id: 'q1_p2', label: "\"Front desk tries when they can.\"", tip: "Opportunity: Inconsistent process is a perfect fit for us." },
                 ],
                 negativeSignals: [
-                    { id: 'q1_n1', label: "\"Our RNs / Nurse Manager does it.\"", tip: "ROI: RNs are too expensive for phone tag. Highlight burnout." },
-                    { id: 'q1_n2', label: "\"Front desk tries when they can.\"", tip: "Inefficiency: Distracted staff leads to low contact rates." },
+                    { id: 'q1_n1', label: "\"Centralized call center team.\"", tip: "Risk: They already have a solution." },
+                    { id: 'q1_n2', label: "\"Medical Assistants or Admin staff.\"", tip: "Risk: Low cost labor makes ROI harder to prove." },
                 ]
             },
             {
@@ -201,12 +227,12 @@
                 text: "On average, how many outbound attempts does it take to actually reach a patient?",
                 subtext: "Highlight the manual labor of 'phone tag'.",
                 positiveSignals: [
-                    { id: 'q2_p1', label: "\"1-2 attempts usually.\"" },
-                    { id: 'q2_p2', label: "\"We text them first.\"" },
+                    { id: 'q2_p1', label: "\"3 to 5 attempts.\"", tip: "Opportunity: High friction means they need our help." },
+                    { id: 'q2_p2', label: "\"We leave voicemails (doesn't count).\"", tip: "Opportunity: Compliance gap we can fix instantly." },
                 ],
                 negativeSignals: [
-                    { id: 'q2_n1', label: "\"3 to 5 attempts.\"", tip: "Labor Cost: Calculate mins/patient. 5 calls * 5 mins = 25 mins lost." },
-                    { id: 'q2_n2', label: "\"We leave voicemails (doesn't count).\"", tip: "Compliance: Voicemail is NOT interactive contact. Claim will be denied." },
+                    { id: 'q2_n1', label: "\"1-2 attempts usually.\"", tip: "Risk: Their process is already efficient." },
+                    { id: 'q2_n2', label: "\"We text them first.\"", tip: "Risk: They are using modern tools." },
                 ]
             },
             {
@@ -215,13 +241,13 @@
                 text: "How do you currently handle the 2-day contact requirement for patients discharged on a Friday?",
                 subtext: "Identify if they miss the 48-hour window on weekends.",
                 positiveSignals: [
-                    { id: 'q3_p1', label: "\"We have weekend staff calling.\"" },
-                    { id: 'q3_p2', label: "\"We use an automated outreach tool.\"" },
+                    { id: 'q3_p1', label: "\"We scramble on Monday mornings.\"", tip: "Opportunity: We cover weekends." },
+                    { id: 'q3_p2', label: "\"We just don't bill Friday discharges.\"", tip: "Opportunity: Immediate revenue lift." },
+                    { id: 'q3_p3', label: "\"What 2-day requirement?\"", tip: "Opportunity: Education gap." },
                 ],
                 negativeSignals: [
-                    { id: 'q3_n1', label: "\"We scramble on Monday mornings.\"", tip: "Risky: Monday is often Day 3. Ask about denials." },
-                    { id: 'q3_n2', label: "\"We just don't bill Friday discharges.\"", tip: "Revenue Leak: Compute the loss (approx 20% of volume)." },
-                    { id: 'q3_n3', label: "\"What 2-day requirement?\"", tip: "Education Gap: Explain CPT 99496 requirements immediately." },
+                    { id: 'q3_n1', label: "\"We have weekend staff calling.\"", tip: "Risk: Staffing is already solved." },
+                    { id: 'q3_n2', label: "\"We use an automated outreach tool.\"", tip: "Risk: Competitor software installed." },
                 ]
             },
             {
@@ -230,12 +256,12 @@
                 text: "When you reach a patient, how often are you unable to get them on the calendar within the 7 or 14-day window?",
                 subtext: "Identify revenue leakage due to operational friction.",
                 positiveSignals: [
-                    { id: 'q4_p1', label: "\"We have dedicated TCM slots.\"" },
-                    { id: 'q4_p2', label: "\"We use Telehealth for these visits.\"" },
+                    { id: 'q4_p1', label: "\"Doctors are booked 3 weeks out.\"", tip: "Opportunity: We can provide Telehealth coverage." },
+                    { id: 'q4_p2', label: "\"We squeeze them in, but it's hard.\"", tip: "Opportunity: Relieve their scheduling pressure." },
                 ],
                 negativeSignals: [
-                    { id: 'q4_n1', label: "\"Doctors are booked 3 weeks out.\"", tip: "Deal Breaker: If they can't see them, they can't bill. Can we offer Telehealth?" },
-                    { id: 'q4_n2', label: "\"We squeeze them in, but it's hard.\"", tip: "Pain: This stresses the clinic. Propose automated scheduling." },
+                    { id: 'q4_n1', label: "\"We have dedicated TCM slots.\"", tip: "Risk: Good operations." },
+                    { id: 'q4_n2', label: "\"We use Telehealth for these visits.\"", tip: "Risk: They are already optimized." },
                 ]
             },
             {
@@ -244,11 +270,11 @@
                 text: "Are you documenting the Med Rec during the phone call, or waiting until the visit?",
                 subtext: "Compliance trap: Med Rec must be done on/before visit.",
                 positiveSignals: [
-                    { id: 'q5_p1', label: "\"Done during the initial call.\"" },
+                    { id: 'q5_p1', label: "\"We do it when they come in.\"", tip: "Opportunity: Compliance risk we can solve." },
+                    { id: 'q5_p2', label: "\"Doctor does it during the exam.\"", tip: "Opportunity: Inefficient use of MD time." },
                 ],
                 negativeSignals: [
-                    { id: 'q5_n1', label: "\"We do it when they come in.\"", tip: "Compliance: If patient no-shows, the call isn't billable. Move Med Rec upstream." },
-                    { id: 'q5_n2', label: "\"Doctor does it during the exam.\"", tip: "Inefficiency: Slows down the provider. RN should prep this." },
+                    { id: 'q5_n1', label: "\"Done during the initial call.\"", tip: "Risk: Compliant workflow established." },
                 ]
             },
             {
@@ -257,14 +283,34 @@
                 text: "Based on your monthly discharge volume, do you know the gap between potential vs. actual TCM revenue?",
                 subtext: "Strategic ROI question.",
                 positiveSignals: [
-                    { id: 'q6_p1', label: "\"Yes, we track capture rate closely.\"" },
+                    { id: 'q6_p1', label: "\"We don't track that specifically.\"", tip: "Opportunity: Show them the Calculator." },
+                    { id: 'q6_p2', label: "\"We think we get most of them.\"", tip: "Opportunity: Challenge their assumptions." },
                 ],
                 negativeSignals: [
-                    { id: 'q6_n1', label: "\"We don't track that specifically.\"", tip: "Close: Use the Calculator above to show them the number now." },
-                    { id: 'q6_n2', label: "\"We think we get most of them.\"", tip: "Doubt: 'Most' usually means 30%. Challenge gently." },
+                    { id: 'q6_n1', label: "\"Yes, we track capture rate closely.\"", tip: "Risk: Sophisticated buyer." },
                 ]
             }
         ];
+
+        // Revenue Calculator
+        function calculateRevenue() {
+            const volume = parseInt(document.getElementById('calc-volume').value) || 0;
+            const capture = parseInt(document.getElementById('calc-capture').value) || 0;
+            const avgReimbursement = 200; // conservative blend of 99495/99496
+
+            const totalPotential = volume * avgReimbursement * 12; // Annual
+            const currentRevenue = totalPotential * (capture / 100);
+            const lostRevenue = totalPotential - currentRevenue;
+
+            // Format Currency
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            });
+
+            document.getElementById('calc-lost').innerText = formatter.format(lostRevenue);
+        }
 
         // Render Questions on Load
         function renderApp() {
@@ -285,6 +331,22 @@
 
                     <!-- Grid -->
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Listen For (Green) -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-4">
+                                <i data-lucide="ear" class="text-emerald-600 w-5 h-5"></i>
+                                <h4 class="font-bold text-emerald-700">Green Flags (Good)</h4>
+                            </div>
+                            <div class="space-y-3">
+                                ${q.positiveSignals.map(sig => `
+                                    <label class="flex items-start gap-3 p-3 rounded cursor-pointer border border-slate-100 hover:border-emerald-200 bg-slate-50 transition-all has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-200">
+                                        <input type="checkbox" onchange="calculateHealth(this)" class="signal-checkbox custom-checkbox mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300" data-type="positive" data-qid="${q.id}" data-tip="${sig.tip || ''}">
+                                        <span class="text-sm text-slate-600 font-medium has-[:checked]:text-emerald-900">${sig.label}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+
                         <!-- Red Flags -->
                         <div>
                             <div class="flex items-center gap-2 mb-4">
@@ -296,22 +358,6 @@
                                     <label class="flex items-start gap-3 p-3 rounded cursor-pointer border border-slate-100 hover:border-rose-200 bg-slate-50 transition-all has-[:checked]:bg-rose-50 has-[:checked]:border-rose-200">
                                         <input type="checkbox" onchange="calculateHealth(this)" class="signal-checkbox custom-checkbox mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-gray-300" data-type="negative" data-qid="${q.id}" data-tip="${sig.tip || ''}">
                                         <span class="text-sm text-slate-600 font-medium has-[:checked]:text-rose-900">${sig.label}</span>
-                                    </label>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <!-- Listen For (Green) -->
-                        <div>
-                            <div class="flex items-center gap-2 mb-4">
-                                <i data-lucide="ear" class="text-emerald-600 w-5 h-5"></i>
-                                <h4 class="font-bold text-emerald-700">Green Flags (Good)</h4>
-                            </div>
-                            <div class="space-y-3">
-                                ${q.positiveSignals.map(sig => `
-                                    <label class="flex items-start gap-3 p-3 rounded cursor-pointer border border-slate-100 hover:border-emerald-200 bg-slate-50 transition-all has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-200">
-                                        <input type="checkbox" onchange="calculateHealth(this)" class="signal-checkbox custom-checkbox mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300" data-type="positive" data-qid="${q.id}" data-tip="">
-                                        <span class="text-sm text-slate-600 font-medium has-[:checked]:text-emerald-900">${sig.label}</span>
                                     </label>
                                 `).join('')}
                             </div>
@@ -330,6 +376,8 @@
 
             // Initialize Icons
             lucide.createIcons();
+            // Initialize Calculator
+            calculateRevenue();
         }
 
         // Deal Health Algorithm & Coach Logic
@@ -381,14 +429,14 @@
                     neutralDot.classList.add('bg-amber-400');
                     return;
                 } else if (health === 'bad') {
-                    titleEl.textContent = "High Pain Detected";
-                    textEl.textContent = "Multiple Red Flags. Focus on the cost of doing nothing (Compliance Risk + Lost Revenue).";
+                    titleEl.textContent = "High Risk Detected";
+                    textEl.textContent = "Too many Red Flags (they might already be optimized). Qualification is low.";
                 } else if (health === 'good') {
                     titleEl.textContent = "Strong Qualification";
-                    textEl.textContent = "They have good processes. Focus on 'Optimization' rather than 'Fixing broken things'.";
+                    textEl.textContent = "Great signals (pain points identified). They need our help.";
                 } else {
                     titleEl.textContent = "Analyzing Pattern...";
-                    textEl.textContent = "Mixed signals. Dig deeper into the Red flags to see if they are urgent problems.";
+                    textEl.textContent = "Mixed signals. Dig deeper into the Opportunities.";
                 }
             }
 
@@ -405,17 +453,20 @@
             }
         }
 
-        // CRM Copy Function
-        function copyForCRM() {
+        // Report Generation Helper
+        function generateReportText() {
             const hospital = document.getElementById('hospital-name').value || "N/A";
             const stakeholders = document.getElementById('stakeholders').value || "N/A";
             const currentHealth = calculateHealth().toUpperCase();
+            // Fetch lost revenue if element exists
+            const lostRev = document.getElementById('calc-lost') ? document.getElementById('calc-lost').innerText : "N/A";
 
             // Build the text note
             let text = `TCM DISCOVERY SUMMARY\n`;
             text += `==================================\n`;
             text += `PROSPECT: ${hospital}\n`;
             text += `STAKEHOLDERS: ${stakeholders}\n`;
+            text += `EST. LOST REVENUE: ${lostRev}/yr\n`;
             text += `DEAL HEALTH: ${currentHealth}\n`;
             text += `==================================\n\n`;
 
@@ -442,6 +493,21 @@
                     text += `\n`;
                 }
             });
+            return text;
+        }
+
+        // Email Export Function
+        function exportToEmail() {
+            const hospital = document.getElementById('hospital-name').value || "Prospect";
+            const text = generateReportText();
+            const subject = encodeURIComponent(`TCM Discovery: ${hospital}`);
+            const body = encodeURIComponent(text);
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        }
+
+        // CRM Copy Function
+        function copyForCRM() {
+            const text = generateReportText();
 
             // Use legacy execCommand for maximum iframe compatibility
             const textArea = document.createElement("textarea");
@@ -507,6 +573,11 @@
             document.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
             document.querySelectorAll('textarea').forEach(txt => txt.value = '');
             
+            // Reset calculator to defaults
+            document.getElementById('calc-volume').value = "50";
+            document.getElementById('calc-capture').value = "20";
+            calculateRevenue();
+
             calculateHealth(); // Reset UI
             closeModal();
         }
