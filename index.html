@@ -40,7 +40,7 @@
                 background-color: white; 
             }
             /* Hide all buttons during print (Reset, Save PDF, Copy CRM) */
-            button { 
+            button, #confirmation-modal { 
                 display: none !important; 
             }
             /* Unstick headers so they don't float over content */
@@ -75,7 +75,7 @@
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <button onclick="resetForm()" class="flex items-center gap-2 text-slate-400 hover:text-white text-sm font-medium transition-colors">
+            <button onclick="requestReset()" class="flex items-center gap-2 text-slate-400 hover:text-white text-sm font-medium transition-colors">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i> Reset
             </button>
             <button onclick="window.print()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded font-bold text-sm flex items-center gap-2 shadow-sm transition-colors">
@@ -134,17 +134,17 @@
 
     <main class="max-w-5xl mx-auto p-6 space-y-6">
         
-        <!-- 3. Prospect Details Card -->
+        <!-- 3. Prospect Details -->
         <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Prospect Details</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Health System / Hospital Name</label>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Hospital Name</label>
                     <input type="text" id="hospital-name" class="w-full bg-slate-50 border border-slate-200 rounded p-3 text-slate-700 focus:outline-none focus:border-blue-400 transition-colors" placeholder="e.g. Memorial Health">
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Stakeholders Present</label>
-                    <input type="text" id="stakeholders" class="w-full bg-slate-50 border border-slate-200 rounded p-3 text-slate-700 focus:outline-none focus:border-blue-400 transition-colors" placeholder="e.g. Jane Doe (CFO), Dr. Smith (CMO)">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Stakeholders</label>
+                    <input type="text" id="stakeholders" class="w-full bg-slate-50 border border-slate-200 rounded p-3 text-slate-700 focus:outline-none focus:border-blue-400 transition-colors" placeholder="e.g. Jane Doe (CFO)">
                 </div>
             </div>
         </div>
@@ -161,53 +161,107 @@
 
     </main>
 
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm transition-all duration-200">
+        <div class="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full border border-slate-200 transform scale-100">
+            <div class="flex items-center gap-3 mb-2 text-slate-800">
+                <div class="bg-red-100 p-2 rounded-full text-red-600">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-lg font-bold">Reset Form?</h3>
+            </div>
+            <p class="text-slate-600 mb-6 ml-11 text-sm">This will clear all your selections and notes. This action cannot be undone.</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded text-sm font-medium transition-colors">Cancel</button>
+                <button onclick="executeReset()" class="px-4 py-2 bg-red-600 text-white rounded text-sm font-bold hover:bg-red-700 shadow-sm transition-colors">Yes, Reset</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Data Structure
         const questionsData = [
             {
                 id: 1,
-                category: "PERFORMANCE",
-                text: "How are you currently tracking your TCM capture rate?",
-                subtext: "Identify if they know they are losing money.",
+                category: "COMPLIANCE",
+                text: "How do you currently handle the 2-day contact requirement for patients discharged on a Friday?",
+                subtext: "Identify if they miss the 48-hour window on weekends.",
                 positiveSignals: [
-                    { id: 'q1_p1', label: "\"Concerned about readmissions / patients 'falling off the cliff'.\"" },
-                    { id: 'q1_p2', label: "\"We track it manually on spreadsheets.\"" },
-                    { id: 'q1_p3', label: "\"We know our rate is low (under 40%).\"" },
-                    { id: 'q1_p4', label: "\"CFO is pushing for new revenue streams.\"" },
+                    { id: 'q1_p1', label: "\"We have weekend staff calling.\"" },
+                    { id: 'q1_p2', label: "\"We use an automated outreach tool.\"" },
                 ],
                 negativeSignals: [
-                    { id: 'q1_n1', label: "\"We don't bill for TCM / Not a priority.\"" },
-                    { id: 'q1_n2', label: "\"Our EHR already does this perfectly.\"" },
-                    { id: 'q1_n3', label: "\"We have no budget for new tools.\"" },
+                    { id: 'q1_n1', label: "\"We scramble on Monday mornings.\"", tip: "Risky: Monday is often Day 3. Ask about denials." },
+                    { id: 'q1_n2', label: "\"We just don't bill Friday discharges.\"", tip: "Revenue Leak: Compute the loss (approx 20% of volume)." },
+                    { id: 'q1_n3', label: "\"What 2-day requirement?\"", tip: "Education Gap: Explain CPT 99496 requirements immediately." },
                 ]
             },
             {
                 id: 2,
-                category: "WORKFLOW",
-                text: "Walk me through the process. Who makes the calls?",
-                subtext: "Identify staff burnout and inefficiency.",
+                category: "STAFFING",
+                text: "Who on your team is physically making the outreach calls?",
+                subtext: "Uncover staff burnout and high labor costs.",
                 positiveSignals: [
-                    { id: 'q2_p1', label: "\"Nurses are doing it on top of clinical work.\"" },
-                    { id: 'q2_p2', label: "\"We miss weekend discharges (2-day window).\"" },
-                    { id: 'q2_p3', label: "\"It takes 20 mins just to find the patient phone number.\"" },
+                    { id: 'q2_p1', label: "\"Centralized call center team.\"" },
+                    { id: 'q2_p2', label: "\"Medical Assistants or Admin staff.\"" },
                 ],
                 negativeSignals: [
-                    { id: 'q2_n1', label: "\"We outsource this to a call center firm.\"" },
-                    { id: 'q2_n2', label: "\"We only call high-risk patients (intentional).\"" },
+                    { id: 'q2_n1', label: "\"Our RNs / Head Nurse does it.\"", tip: "ROI: RNs are too expensive for phone tag. Highlight burnout." },
+                    { id: 'q2_n2', label: "\"Front desk tries when they can.\"", tip: "Inefficiency: Distracted staff leads to low contact rates." },
                 ]
             },
             {
                 id: 3,
-                category: "CHALLENGES",
-                text: "What happens when you miss a patient?",
-                subtext: "Uncover pain points and urgency.",
+                category: "SCHEDULING",
+                text: "When you reach a patient, how often are you unable to get them on the calendar within the 7 or 14-day window?",
+                subtext: "Identify revenue leakage due to operational friction.",
                 positiveSignals: [
-                    { id: 'q3_p1', label: "\"We lose the revenue (approx $200/patient).\"" },
-                    { id: 'q3_p2', label: "\"Readmission penalties increase.\"" },
+                    { id: 'q3_p1', label: "\"We have dedicated TCM slots.\"" },
+                    { id: 'q3_p2', label: "\"We use Telehealth for these visits.\"" },
                 ],
                 negativeSignals: [
-                    { id: 'q3_n1', label: "\"It's fine, we have plenty of volume.\"" },
-                    { id: 'q3_n2', label: "\"Administration doesn't care about this metric.\"" },
+                    { id: 'q3_n1', label: "\"Doctors are booked 3 weeks out.\"", tip: "Deal Breaker: If they can't see them, they can't bill. Can we offer Telehealth?" },
+                    { id: 'q3_n2', label: "\"We squeeze them in, but it's hard.\"", tip: "Pain: This stresses the clinic. Propose automated scheduling." },
+                ]
+            },
+            {
+                id: 4,
+                category: "RISK",
+                text: "Are you documenting the Med Rec during the phone call, or waiting until the visit?",
+                subtext: "Compliance trap: Med Rec must be done on/before visit.",
+                positiveSignals: [
+                    { id: 'q4_p1', label: "\"Done during the initial call.\"" },
+                ],
+                negativeSignals: [
+                    { id: 'q4_n1', label: "\"We do it when they come in.\"", tip: "Compliance: If patient no-shows, the call isn't billable. Move Med Rec upstream." },
+                    { id: 'q4_n2', label: "\"Doctor does it during the exam.\"", tip: "Inefficiency: Slows down the provider. RN should prep this." },
+                ]
+            },
+            {
+                id: 5,
+                category: "EFFICIENCY",
+                text: "On average, how many outbound attempts does it take to actually reach a patient?",
+                subtext: "Highlight the manual labor of 'phone tag'.",
+                positiveSignals: [
+                    { id: 'q5_p1', label: "\"1-2 attempts usually.\"" },
+                    { id: 'q5_p2', label: "\"We text them first.\"" },
+                ],
+                negativeSignals: [
+                    { id: 'q5_n1', label: "\"3 to 5 attempts.\"", tip: "Labor Cost: Calculate mins/patient. 5 calls * 5 mins = 25 mins lost." },
+                    { id: 'q5_n2', label: "\"We leave voicemails (doesn't count).\"", tip: "Compliance: Voicemail is NOT interactive contact. Claim will be denied." },
+                ]
+            },
+            {
+                id: 6,
+                category: "FINANCIAL",
+                text: "Based on your monthly discharge volume, do you know the gap between potential vs. actual TCM revenue?",
+                subtext: "Strategic ROI question.",
+                positiveSignals: [
+                    { id: 'q6_p1', label: "\"Yes, we track capture rate closely.\"" },
+                ],
+                negativeSignals: [
+                    { id: 'q6_n1', label: "\"We don't track that specifically.\"", tip: "Close: Use the Calculator above to show them the number now." },
+                    { id: 'q6_n2', label: "\"We think we get most of them.\"", tip: "Doubt: 'Most' usually means 30%. Challenge gently." },
                 ]
             }
         ];
@@ -225,7 +279,7 @@
                         <span class="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded mb-3">
                             Q${q.id}: ${q.category}
                         </span>
-                        <h2 class="text-2xl font-bold text-slate-900 mb-2 font-serif">"${q.text}"</h2>
+                        <h2 class="text-xl font-bold text-slate-900 mb-2 font-serif">"${q.text}"</h2>
                         <p class="text-slate-400 text-sm italic">Goal: ${q.subtext}</p>
                     </div>
 
@@ -235,12 +289,12 @@
                         <div>
                             <div class="flex items-center gap-2 mb-4">
                                 <i data-lucide="ear" class="text-emerald-600 w-5 h-5"></i>
-                                <h4 class="font-bold text-emerald-700">Listen For (Green Flags)</h4>
+                                <h4 class="font-bold text-emerald-700">Green Flags (Good)</h4>
                             </div>
                             <div class="space-y-3">
                                 ${q.positiveSignals.map(sig => `
                                     <label class="flex items-start gap-3 p-3 rounded cursor-pointer border border-slate-100 hover:border-emerald-200 bg-slate-50 transition-all has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-200">
-                                        <input type="checkbox" onchange="calculateHealth()" class="signal-checkbox custom-checkbox mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300" data-type="positive" data-qid="${q.id}" data-sid="${sig.id}">
+                                        <input type="checkbox" onchange="calculateHealth(this)" class="signal-checkbox custom-checkbox mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300" data-type="positive" data-qid="${q.id}" data-tip="">
                                         <span class="text-sm text-slate-600 font-medium has-[:checked]:text-emerald-900">${sig.label}</span>
                                     </label>
                                 `).join('')}
@@ -256,7 +310,7 @@
                             <div class="space-y-3">
                                 ${q.negativeSignals.map(sig => `
                                     <label class="flex items-start gap-3 p-3 rounded cursor-pointer border border-slate-100 hover:border-rose-200 bg-slate-50 transition-all has-[:checked]:bg-rose-50 has-[:checked]:border-rose-200">
-                                        <input type="checkbox" onchange="calculateHealth()" class="signal-checkbox custom-checkbox mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-gray-300" data-type="negative" data-qid="${q.id}" data-sid="${sig.id}">
+                                        <input type="checkbox" onchange="calculateHealth(this)" class="signal-checkbox custom-checkbox mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-gray-300" data-type="negative" data-qid="${q.id}" data-tip="${sig.tip || ''}">
                                         <span class="text-sm text-slate-600 font-medium has-[:checked]:text-rose-900">${sig.label}</span>
                                     </label>
                                 `).join('')}
@@ -267,7 +321,7 @@
                     <!-- Notes -->
                     <div class="px-6 pb-6 pt-2">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Rep Notes</h4>
-                        <textarea id="note-q${q.id}" class="w-full min-h-[80px] p-3 rounded border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-blue-400 text-sm resize-y" placeholder="Type specific metrics mentioned (e.g. 300 discharges/mo)..."></textarea>
+                        <textarea id="note-q${q.id}" class="w-full min-h-[80px] p-3 rounded border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-blue-400 text-sm resize-y" placeholder="Notes..."></textarea>
                     </div>
                 </div>
                 `;
@@ -278,8 +332,8 @@
             lucide.createIcons();
         }
 
-        // Deal Health Algorithm
-        function calculateHealth() {
+        // Deal Health Algorithm & Coach Logic
+        function calculateHealth(triggerCheckbox = null) {
             const checkboxes = document.querySelectorAll('.signal-checkbox:checked');
             let posCount = 0;
             let negCount = 0;
@@ -289,17 +343,17 @@
                 if (cb.dataset.type === 'negative') negCount++;
             });
 
-            // Determine Health
+            // Determine Health State
             let health = 'neutral';
             if (posCount > negCount + 1) health = 'good';
             if (negCount > posCount + 1) health = 'bad';
 
-            updateUI(health, posCount, negCount);
+            updateUI(health, posCount, negCount, triggerCheckbox);
             return health;
         }
 
-        // Update UI based on Health
-        function updateUI(health, posCount, negCount) {
+        // Update UI based on Health & Triggers
+        function updateUI(health, posCount, negCount, triggerCheckbox) {
             const titleEl = document.getElementById('coach-title');
             const textEl = document.getElementById('coach-text');
             const badDot = document.getElementById('health-bad');
@@ -311,27 +365,41 @@
             neutralDot.className = "w-3 h-3 rounded-full bg-slate-300 transition-colors duration-300";
             goodDot.className = "w-3 h-3 rounded-full bg-slate-300 transition-colors duration-300";
 
-            if (posCount === 0 && negCount === 0) {
-                titleEl.textContent = "Listening for signals...";
-                textEl.textContent = "Select Green or Red flags below to get real-time positioning advice.";
-                neutralDot.classList.remove('bg-slate-300');
-                neutralDot.classList.add('bg-amber-400');
-                return;
+            // 1. Prioritize specific tip from the checkbox just clicked
+            if (triggerCheckbox && triggerCheckbox.checked && triggerCheckbox.dataset.tip) {
+                titleEl.textContent = "Coach Advice:";
+                textEl.textContent = triggerCheckbox.dataset.tip;
+                
+                // Keep the color logic for the dots below
+            } 
+            // 2. Fallback to general health state if no specific tip triggered or box unchecked
+            else {
+                if (posCount === 0 && negCount === 0) {
+                    titleEl.textContent = "Listening for signals...";
+                    textEl.textContent = "Select Green or Red flags below to get real-time positioning advice.";
+                    neutralDot.classList.remove('bg-slate-300');
+                    neutralDot.classList.add('bg-amber-400');
+                    return;
+                } else if (health === 'bad') {
+                    titleEl.textContent = "High Pain Detected";
+                    textEl.textContent = "Multiple Red Flags. Focus on the cost of doing nothing (Compliance Risk + Lost Revenue).";
+                } else if (health === 'good') {
+                    titleEl.textContent = "Strong Qualification";
+                    textEl.textContent = "They have good processes. Focus on 'Optimization' rather than 'Fixing broken things'.";
+                } else {
+                    titleEl.textContent = "Analyzing Pattern...";
+                    textEl.textContent = "Mixed signals. Dig deeper into the Red flags to see if they are urgent problems.";
+                }
             }
 
+            // Update Dots Visuals
             if (health === 'bad') {
-                titleEl.textContent = "Caution: High Resistance";
-                textEl.textContent = "Red flags detected. They seem efficient or uninterested. Pivot to: \"Even with that process, do you ever miss patients?\"";
                 badDot.classList.remove('bg-slate-300');
                 badDot.classList.add('bg-rose-500');
             } else if (health === 'good') {
-                titleEl.textContent = "Strong Opportunity Detected";
-                textEl.textContent = "Great signals. They have admitted to pain. Dig deeper: \"How does that impact your annual revenue?\"";
                 goodDot.classList.remove('bg-slate-300');
                 goodDot.classList.add('bg-emerald-500');
             } else {
-                titleEl.textContent = "Analyzing Pattern...";
-                textEl.textContent = "Mixed signals received. Clarify the red flags to see if they are hard stops.";
                 neutralDot.classList.remove('bg-slate-300');
                 neutralDot.classList.add('bg-amber-400');
             }
@@ -358,7 +426,7 @@
 
                 // Only add sections that have data
                 if (checkedSignals.length > 0 || note) {
-                    text += `[Q${qId}: ${q.category}] ${q.text}\n`;
+                    text += `[${q.category}] ${q.text}\n`;
                     
                     if (checkedSignals.length > 0) {
                         checkedSignals.forEach(cb => {
@@ -402,22 +470,48 @@
 
             } catch (err) {
                 console.error('Copy failed', err);
-                alert("Failed to copy notes. Please manually copy the content.");
+                const btn = document.getElementById('btn-copy-crm');
+                const originalContent = btn.innerHTML;
+                
+                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                btn.classList.add('bg-red-600', 'hover:bg-red-700');
+                btn.innerHTML = `<i data-lucide="x" class="w-5 h-5"></i> Error Copying`;
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                    btn.innerHTML = originalContent;
+                    lucide.createIcons();
+                }, 2000);
             }
             
             document.body.removeChild(textArea);
         }
 
-        function resetForm() {
-            if (confirm("Clear all selections and notes?")) {
-                document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                document.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
-                document.querySelectorAll('textarea').forEach(txt => txt.value = '');
-                calculateHealth(); // Reset UI
-            }
+        // Custom Modal Logic to replace native confirm()
+        function requestReset() {
+            const modal = document.getElementById('confirmation-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('confirmation-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function executeReset() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
+            document.querySelectorAll('textarea').forEach(txt => txt.value = '');
+            
+            calculateHealth(); // Reset UI
+            closeModal();
         }
         
-        // Auto-expand textareas before printing to prevent cut-off text
+        // Auto-expand textareas before printing
         window.addEventListener('beforeprint', () => {
             document.querySelectorAll('textarea').forEach(tx => {
                 tx.style.height = 'auto';
