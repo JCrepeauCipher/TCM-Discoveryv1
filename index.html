@@ -183,72 +183,72 @@
         const questionsData = [
             {
                 id: 1,
-                category: "COMPLIANCE",
-                text: "How do you currently handle the 2-day contact requirement for patients discharged on a Friday?",
-                subtext: "Identify if they miss the 48-hour window on weekends.",
-                positiveSignals: [
-                    { id: 'q1_p1', label: "\"We have weekend staff calling.\"" },
-                    { id: 'q1_p2', label: "\"We use an automated outreach tool.\"" },
-                ],
-                negativeSignals: [
-                    { id: 'q1_n1', label: "\"We scramble on Monday mornings.\"", tip: "Risky: Monday is often Day 3. Ask about denials." },
-                    { id: 'q1_n2', label: "\"We just don't bill Friday discharges.\"", tip: "Revenue Leak: Compute the loss (approx 20% of volume)." },
-                    { id: 'q1_n3', label: "\"What 2-day requirement?\"", tip: "Education Gap: Explain CPT 99496 requirements immediately." },
-                ]
-            },
-            {
-                id: 2,
                 category: "STAFFING",
                 text: "Who on your team is physically making the outreach calls?",
                 subtext: "Uncover staff burnout and high labor costs.",
                 positiveSignals: [
-                    { id: 'q2_p1', label: "\"Centralized call center team.\"" },
-                    { id: 'q2_p2', label: "\"Medical Assistants or Admin staff.\"" },
+                    { id: 'q1_p1', label: "\"Centralized call center team.\"" },
+                    { id: 'q1_p2', label: "\"Medical Assistants or Admin staff.\"" },
                 ],
                 negativeSignals: [
-                    { id: 'q2_n1', label: "\"Our RNs / Head Nurse does it.\"", tip: "ROI: RNs are too expensive for phone tag. Highlight burnout." },
-                    { id: 'q2_n2', label: "\"Front desk tries when they can.\"", tip: "Inefficiency: Distracted staff leads to low contact rates." },
+                    { id: 'q1_n1', label: "\"Our RNs / Head Nurse does it.\"", tip: "ROI: RNs are too expensive for phone tag. Highlight burnout." },
+                    { id: 'q1_n2', label: "\"Front desk tries when they can.\"", tip: "Inefficiency: Distracted staff leads to low contact rates." },
                 ]
             },
             {
-                id: 3,
-                category: "SCHEDULING",
-                text: "When you reach a patient, how often are you unable to get them on the calendar within the 7 or 14-day window?",
-                subtext: "Identify revenue leakage due to operational friction.",
-                positiveSignals: [
-                    { id: 'q3_p1', label: "\"We have dedicated TCM slots.\"" },
-                    { id: 'q3_p2', label: "\"We use Telehealth for these visits.\"" },
-                ],
-                negativeSignals: [
-                    { id: 'q3_n1', label: "\"Doctors are booked 3 weeks out.\"", tip: "Deal Breaker: If they can't see them, they can't bill. Can we offer Telehealth?" },
-                    { id: 'q3_n2', label: "\"We squeeze them in, but it's hard.\"", tip: "Pain: This stresses the clinic. Propose automated scheduling." },
-                ]
-            },
-            {
-                id: 4,
-                category: "RISK",
-                text: "Are you documenting the Med Rec during the phone call, or waiting until the visit?",
-                subtext: "Compliance trap: Med Rec must be done on/before visit.",
-                positiveSignals: [
-                    { id: 'q4_p1', label: "\"Done during the initial call.\"" },
-                ],
-                negativeSignals: [
-                    { id: 'q4_n1', label: "\"We do it when they come in.\"", tip: "Compliance: If patient no-shows, the call isn't billable. Move Med Rec upstream." },
-                    { id: 'q4_n2', label: "\"Doctor does it during the exam.\"", tip: "Inefficiency: Slows down the provider. RN should prep this." },
-                ]
-            },
-            {
-                id: 5,
+                id: 2,
                 category: "EFFICIENCY",
                 text: "On average, how many outbound attempts does it take to actually reach a patient?",
                 subtext: "Highlight the manual labor of 'phone tag'.",
                 positiveSignals: [
-                    { id: 'q5_p1', label: "\"1-2 attempts usually.\"" },
-                    { id: 'q5_p2', label: "\"We text them first.\"" },
+                    { id: 'q2_p1', label: "\"1-2 attempts usually.\"" },
+                    { id: 'q2_p2', label: "\"We text them first.\"" },
                 ],
                 negativeSignals: [
-                    { id: 'q5_n1', label: "\"3 to 5 attempts.\"", tip: "Labor Cost: Calculate mins/patient. 5 calls * 5 mins = 25 mins lost." },
-                    { id: 'q5_n2', label: "\"We leave voicemails (doesn't count).\"", tip: "Compliance: Voicemail is NOT interactive contact. Claim will be denied." },
+                    { id: 'q2_n1', label: "\"3 to 5 attempts.\"", tip: "Labor Cost: Calculate mins/patient. 5 calls * 5 mins = 25 mins lost." },
+                    { id: 'q2_n2', label: "\"We leave voicemails (doesn't count).\"", tip: "Compliance: Voicemail is NOT interactive contact. Claim will be denied." },
+                ]
+            },
+            {
+                id: 3,
+                category: "COMPLIANCE",
+                text: "How do you currently handle the 2-day contact requirement for patients discharged on a Friday?",
+                subtext: "Identify if they miss the 48-hour window on weekends.",
+                positiveSignals: [
+                    { id: 'q3_p1', label: "\"We have weekend staff calling.\"" },
+                    { id: 'q3_p2', label: "\"We use an automated outreach tool.\"" },
+                ],
+                negativeSignals: [
+                    { id: 'q3_n1', label: "\"We scramble on Monday mornings.\"", tip: "Risky: Monday is often Day 3. Ask about denials." },
+                    { id: 'q3_n2', label: "\"We just don't bill Friday discharges.\"", tip: "Revenue Leak: Compute the loss (approx 20% of volume)." },
+                    { id: 'q3_n3', label: "\"What 2-day requirement?\"", tip: "Education Gap: Explain CPT 99496 requirements immediately." },
+                ]
+            },
+            {
+                id: 4,
+                category: "SCHEDULING",
+                text: "When you reach a patient, how often are you unable to get them on the calendar within the 7 or 14-day window?",
+                subtext: "Identify revenue leakage due to operational friction.",
+                positiveSignals: [
+                    { id: 'q4_p1', label: "\"We have dedicated TCM slots.\"" },
+                    { id: 'q4_p2', label: "\"We use Telehealth for these visits.\"" },
+                ],
+                negativeSignals: [
+                    { id: 'q4_n1', label: "\"Doctors are booked 3 weeks out.\"", tip: "Deal Breaker: If they can't see them, they can't bill. Can we offer Telehealth?" },
+                    { id: 'q4_n2', label: "\"We squeeze them in, but it's hard.\"", tip: "Pain: This stresses the clinic. Propose automated scheduling." },
+                ]
+            },
+            {
+                id: 5,
+                category: "RISK",
+                text: "Are you documenting the Med Rec during the phone call, or waiting until the visit?",
+                subtext: "Compliance trap: Med Rec must be done on/before visit.",
+                positiveSignals: [
+                    { id: 'q5_p1', label: "\"Done during the initial call.\"" },
+                ],
+                negativeSignals: [
+                    { id: 'q5_n1', label: "\"We do it when they come in.\"", tip: "Compliance: If patient no-shows, the call isn't billable. Move Med Rec upstream." },
+                    { id: 'q5_n2', label: "\"Doctor does it during the exam.\"", tip: "Inefficiency: Slows down the provider. RN should prep this." },
                 ]
             },
             {
@@ -285,22 +285,6 @@
 
                     <!-- Grid -->
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <!-- Listen For (Green) -->
-                        <div>
-                            <div class="flex items-center gap-2 mb-4">
-                                <i data-lucide="ear" class="text-emerald-600 w-5 h-5"></i>
-                                <h4 class="font-bold text-emerald-700">Green Flags (Good)</h4>
-                            </div>
-                            <div class="space-y-3">
-                                ${q.positiveSignals.map(sig => `
-                                    <label class="flex items-start gap-3 p-3 rounded cursor-pointer border border-slate-100 hover:border-emerald-200 bg-slate-50 transition-all has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-200">
-                                        <input type="checkbox" onchange="calculateHealth(this)" class="signal-checkbox custom-checkbox mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300" data-type="positive" data-qid="${q.id}" data-tip="">
-                                        <span class="text-sm text-slate-600 font-medium has-[:checked]:text-emerald-900">${sig.label}</span>
-                                    </label>
-                                `).join('')}
-                            </div>
-                        </div>
-
                         <!-- Red Flags -->
                         <div>
                             <div class="flex items-center gap-2 mb-4">
@@ -312,6 +296,22 @@
                                     <label class="flex items-start gap-3 p-3 rounded cursor-pointer border border-slate-100 hover:border-rose-200 bg-slate-50 transition-all has-[:checked]:bg-rose-50 has-[:checked]:border-rose-200">
                                         <input type="checkbox" onchange="calculateHealth(this)" class="signal-checkbox custom-checkbox mt-1 w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-gray-300" data-type="negative" data-qid="${q.id}" data-tip="${sig.tip || ''}">
                                         <span class="text-sm text-slate-600 font-medium has-[:checked]:text-rose-900">${sig.label}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Listen For (Green) -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-4">
+                                <i data-lucide="ear" class="text-emerald-600 w-5 h-5"></i>
+                                <h4 class="font-bold text-emerald-700">Green Flags (Good)</h4>
+                            </div>
+                            <div class="space-y-3">
+                                ${q.positiveSignals.map(sig => `
+                                    <label class="flex items-start gap-3 p-3 rounded cursor-pointer border border-slate-100 hover:border-emerald-200 bg-slate-50 transition-all has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-200">
+                                        <input type="checkbox" onchange="calculateHealth(this)" class="signal-checkbox custom-checkbox mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300" data-type="positive" data-qid="${q.id}" data-tip="">
+                                        <span class="text-sm text-slate-600 font-medium has-[:checked]:text-emerald-900">${sig.label}</span>
                                     </label>
                                 `).join('')}
                             </div>
